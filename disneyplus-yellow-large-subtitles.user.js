@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         Disney+ Subtitle Styler: Large & Yellow
 // @namespace    https://greasyfork.org/users/1631012-ionut-baciu
-// @version      1.9.0
+// @version      1.10.0
 // @description  Makes Disney+ subtitles always render large and yellow. Shadow-DOM aware, with optional Netflix Sans font support and fully customizable size, color, and font.
 // @author       ionut-baciu
+// @homepageURL  https://github.com/ibaciu6/userscripts
+// @supportURL   https://github.com/ibaciu6/userscripts/issues
 // @match        *://*.disneyplus.com/*
 // @grant        none
 // @license      MIT

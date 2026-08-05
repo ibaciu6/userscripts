@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         Disney+ Auto Fullscreen (Enhanced)
 // @namespace    https://greasyfork.org/users/1631012-ionut-baciu
-// @version      1.4.0
+// @version      1.5.0
 // @description  Automatically enters fullscreen when playback starts on Disney+ and stays on through binge-watching. Survives episode transitions, hides the mouse cursor in fullscreen, and offers a click-to-enter-fullscreen overlay when autoplay is blocked.
 // @author       ionut-baciu
+// @homepageURL  https://github.com/ibaciu6/userscripts
+// @supportURL   https://github.com/ibaciu6/userscripts/issues
 // @match        *://*.disneyplus.com/*
 // @grant        none
 // @run-at       document-idle
