@@ -13,6 +13,8 @@ A collection of userscripts for [Disney+](https://www.disneyplus.com) (and [Netf
 
 ### 1. Binge Watching (Netflix & Disney+)
 
+**Greasy Fork:** https://greasyfork.org/en/scripts/589981-binge-watching-netflix-disney
+
 Automatically skips intros, recaps, and credits and clicks the next episode, so you can binge without touching the keyboard.
 
 - Skips **Skip Intro / Skip Recap / Skip Credits** buttons on both Netflix and Disney+.
