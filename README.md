@@ -1,10 +1,44 @@
 # Userscripts
 
-A collection of userscripts for [Disney+](https://www.disneyplus.com), written by [Ionut Baciu](https://github.com/ibaciu6). All scripts are published on Greasy Fork and MIT licensed.
+A collection of userscripts for [Disney+](https://www.disneyplus.com) (and [Netflix](https://www.netflix.com)), written by [Ionut Baciu](https://github.com/ibaciu6). All scripts are MIT licensed.
+
+## How to install
+
+1. Install the **Tampermonkey** browser extension from <https://www.tampermonkey.net/>.
+2. Open a script below, then open its `.user.js` file (the links in each entry).
+3. Tampermonkey shows an install page — click **Install**.
+4. Reload the target site (Disney+ / Netflix) and the script runs automatically.
 
 ## Scripts
 
-### 1. Disney+ Subtitle Styler: Large & Yellow
+### 1. Binge Watching (Netflix & Disney+)
+
+Automatically skips intros, recaps, and credits and clicks the next episode, so you can binge without touching the keyboard.
+
+- Skips **Skip Intro / Skip Recap / Skip Credits** buttons on both Netflix and Disney+.
+- Auto-advances to the next episode when an episode ends (Disney+ post-play "Play Next" / countdown and tray paths).
+- No dependencies, no jQuery — plain vanilla JS.
+- **Shadow-DOM aware:** patches `attachShadow` (closed roots included) so it can see and click inside Disney+'s web-component player.
+- Event-driven scanning (mutation observer + fallback timer), with safety guards so it never clicks mid-recap, during ads, or twice into the same transition.
+- Optional debug logging (disabled by default).
+
+**Settings:** edit the `CONFIG` block at the top of the script.
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `skipIntros` | `true` | Click "Skip Intro" / "Skip Recap" buttons |
+| `skipCredits` | `true` | Click skip-credits / next-episode buttons near the end of an episode |
+| `autoNext` | `true` | Click "Up Next" / post-play overlays to start the next episode |
+| `debug` | `false` | Log actions to the browser console (enable only when troubleshooting) |
+| `fallbackScanMs` | `3000` | Fallback scan interval in ms (the MutationObserver does most of the work) |
+
+**File:** [binge-watching-netflix-disney-plus.user.js](binge-watching-netflix-disney-plus.user.js)
+
+**Install:** <https://github.com/ibaciu6/userscripts/raw/main/binge-watching-netflix-disney-plus.user.js>
+
+---
+
+### 2. Disney+ Subtitle Styler: Large & Yellow
 
 **Greasy Fork:** https://greasyfork.org/en/scripts/589939-disney-subtitle-styler-large-yellow
 
@@ -32,7 +66,7 @@ Makes Disney+ subtitles always render **large and yellow** so they're easy to re
 
 ---
 
-### 2. Disney+ Auto Fullscreen (Enhanced)
+### 3. Disney+ Auto Fullscreen (Enhanced)
 
 **Greasy Fork:** https://greasyfork.org/en/scripts/589940-disney-auto-fullscreen-enhanced
 
