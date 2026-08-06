@@ -44,8 +44,8 @@
     const SIZES = {
         small: '1.5rem',
         medium: '2rem',
-        large: '2.5rem',
-        xlarge: '3rem',
+        large: '3rem',
+        xlarge: '3.5rem',
     };
 
     // Netflix renders its subtitle cues at 17px (too small on large screens).
