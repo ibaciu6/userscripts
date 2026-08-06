@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Disney+ Auto Fullscreen (Enhanced)
 // @namespace    https://greasyfork.org/users/1631012-ionut-baciu
-// @version      1.5.0
+// @version      1.6.0
 // @description  Automatically enters fullscreen when playback starts on Disney+ and stays on through binge-watching. Survives episode transitions, hides the mouse cursor in fullscreen, and offers a click-to-enter-fullscreen overlay when autoplay is blocked.
 // @author       ionut-baciu
 // @homepageURL  https://github.com/ibaciu6/userscripts
@@ -253,9 +253,26 @@
     document.addEventListener('click', () => { lastUserGesture = now(); }, true);
     document.addEventListener('keydown', () => { lastUserGesture = now(); }, true);
 
+    // v1.6.0: when the player is rebuilt on an episode switch, the new
+    // elements (video, controls — inside shadow roots the CSS rule can't
+    // reach) don't have the inline cursor:none, so the cursor shows as the
+    // pointer "hand" until the next mouse move re-applies it. Re-apply
+    // shortly after any rebuild while the cursor is in the hidden-idle state.
+    let cursorReapplyTimer = null;
+    function reapplyCursorSoon() {
+        if (cursorReapplyTimer) return;
+        cursorReapplyTimer = setTimeout(() => {
+            cursorReapplyTimer = null;
+            if (isFullscreen() && document.documentElement.classList.contains('dpfs-idle')) {
+                applyCursorHidden(true);
+            }
+        }, 300);
+    }
+
     // Watch for player creation/recreation (Disney+ is a SPA).
     const observer = new MutationObserver(() => {
         for (const v of findVideos()) attachToVideo(v);
+        reapplyCursorSoon();
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
 

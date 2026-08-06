@@ -1,17 +1,42 @@
 // ==UserScript==
 // @name         Disney+ Subtitle Styler: Large & Yellow
 // @namespace    https://greasyfork.org/users/1631012-ionut-baciu
-// @version      1.10.0
+// @version      1.11.0
 // @description  Makes Disney+ subtitles always render large and yellow. Shadow-DOM aware, with optional Netflix Sans font support and fully customizable size, color, and font.
 // @author       ionut-baciu
 // @homepageURL  https://github.com/ibaciu6/userscripts
 // @supportURL   https://github.com/ibaciu6/userscripts/issues
 // @match        *://*.disneyplus.com/*
 // @grant        none
+// @run-at       document-start
 // @license      MIT
 // ==/UserScript==
 
 (function () {
+    // ============ CLOSED SHADOW ROOT SUPPORT ============
+    // v1.11.0: Disney+ rebuilds the subtitle renderer on every episode switch,
+    // and the new shadow root is often attached AFTER the host element is
+    // added to the light DOM — so a MutationObserver on the document can miss
+    // it, and the subtitle styles never reach the new root (shading lost
+    // "sometimes" on episode changes). Patch attachShadow (chained, so it
+    // composes with other scripts that patch it, e.g. Binge Watching) and
+    // style + observe every root the instant it is created. The cache also
+    // covers CLOSED roots that `host.shadowRoot` can never see.
+    const SHADOW_ROOTS = new WeakMap();
+    {
+        const nativeAttachShadow = Element.prototype.attachShadow;
+        Element.prototype.attachShadow = function (init) {
+            const root = nativeAttachShadow.call(this, init);
+            SHADOW_ROOTS.set(this, root);
+            handleRoot(root);
+            observeRoot(root);
+            return root;
+        };
+    }
+    function getRoot(host) {
+        return (host && (host.shadowRoot || SHADOW_ROOTS.get(host))) || null;
+    }
+
     // ============ SETTINGS ============
     // Edit values below once; every reference in the script uses them.
     //
@@ -147,21 +172,26 @@
         }
     }
 
-    function observeShadow(host) {
-        if (!host.shadowRoot) return;
-        handleRoot(host.shadowRoot);
-        if (!host.shadowRoot.__dplusObserved) {
-            host.shadowRoot.__dplusObserved = true;
-            const observer = new MutationObserver(() => handleRoot(host.shadowRoot));
-            observer.observe(host.shadowRoot, { childList: true, subtree: true });
+    function observeRoot(root) {
+        if (!root) return;
+        handleRoot(root);
+        if (!root.__dplusObserved) {
+            root.__dplusObserved = true;
+            const observer = new MutationObserver(() => handleRoot(root));
+            observer.observe(root, { childList: true, subtree: true });
             observers.push(observer);
         }
     }
 
+    function observeShadow(host) {
+        observeRoot(getRoot(host));
+    }
+
     function walk(el) {
-        if (el.shadowRoot) {
-            observeShadow(el);
-            for (const child of el.shadowRoot.children) walk(child);
+        const root = getRoot(el);
+        if (root) {
+            observeRoot(root);
+            for (const child of root.children) walk(child);
         }
         for (const child of el.children) walk(child);
     }
