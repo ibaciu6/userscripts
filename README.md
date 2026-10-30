@@ -1,13 +1,13 @@
 # Userscripts
 
-A collection of userscripts for [Disney+](https://www.disneyplus.com) (and [Netflix](https://www.netflix.com)), written by [Ionut Baciu](https://github.com/ibaciu6). All scripts are MIT licensed.
+A collection of userscripts for [Disney+](https://www.disneyplus.com), [Netflix](https://www.netflix.com) and [Reddit](https://www.reddit.com), written by [Ionut Baciu](https://github.com/ibaciu6). All scripts are MIT licensed.
 
 ## How to install
 
 1. Install the **Tampermonkey** browser extension from <https://www.tampermonkey.net/>.
 2. Open a script below, then open its `.user.js` file (the links in each entry).
 3. Tampermonkey shows an install page — click **Install**.
-4. Reload the target site (Disney+ / Netflix) and the script runs automatically.
+4. Reload the target site (Disney+ / Netflix / Reddit) and the script runs automatically.
 
 ## Scripts
 
@@ -93,6 +93,25 @@ Automatically enters fullscreen on Disney+ when you click **Play/Continue** and 
 **Credits:** enhanced rewrite of **Disney+ Auto Fullscreen** by [Raizuto](https://greasyfork.org/en/scripts/553167) (MIT License).
 
 **File:** [disneyplus-auto-fullscreen.user.js](disneyplus-auto-fullscreen.user.js)
+
+---
+
+### 4. Reddit Base64 Decoder
+
+Automatically decodes base64-encoded links posted as plain text in Reddit posts and comments, turning them into clickable links.
+
+- Works on both the new (`shreddit`) and old Reddit layouts — posts **and** comments.
+- Decodes standard **and** base64url tokens (`-`/`_`, missing padding accepted).
+- Only replaces a token when it decodes to a printable `http(s)://` URL — everything else is left untouched.
+- Walks text nodes and replaces in place, so existing formatting and links are preserved.
+- Handles lazily loaded comments via a debounced `MutationObserver`.
+- No dependencies, no network requests — nothing leaves your browser.
+
+**Install:** <https://github.com/ibaciu6/userscripts/raw/main/Reddit_Base64_Decoder.user.js>
+
+**Credits:** improved rewrite of **Reddit Base64 Decoder** by [EliteDaMyth](https://openuserjs.org/users/EliteDaMyth) (MIT License).
+
+**File:** [Reddit_Base64_Decoder.user.js](Reddit_Base64_Decoder.user.js)
 
 ---
 
