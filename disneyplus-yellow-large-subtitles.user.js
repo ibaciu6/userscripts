@@ -1,0 +1,217 @@
+// ==UserScript==
+// @name         Disney+ Subtitle Styler: Large & Yellow
+// @namespace    https://greasyfork.org/users/1631012-ionut-baciu
+// @version      1.12.0
+// @description  Makes Disney+ subtitles always render large and yellow. Shadow-DOM aware, with Inter font support and fully customizable size, color, and font.
+// @author       ionut-baciu
+// @homepageURL  https://github.com/ibaciu6/userscripts
+// @supportURL   https://github.com/ibaciu6/userscripts/issues
+// @match        *://*.disneyplus.com/*
+// @grant        none
+// @run-at       document-start
+// @license      MIT
+// ==/UserScript==
+
+(function () {
+    // ============ CLOSED SHADOW ROOT SUPPORT ============
+    // v1.11.0: Disney+ rebuilds the subtitle renderer on every episode switch,
+    // and the new shadow root is often attached AFTER the host element is
+    // added to the light DOM — so a MutationObserver on the document can miss
+    // it, and the subtitle styles never reach the new root (shading lost
+    // "sometimes" on episode changes). Patch attachShadow (chained, so it
+    // composes with other scripts that patch it, e.g. Binge Watching) and
+    // style + observe every root the instant it is created. The cache also
+    // covers CLOSED roots that `host.shadowRoot` can never see.
+    const SHADOW_ROOTS = new WeakMap();
+    {
+        const nativeAttachShadow = Element.prototype.attachShadow;
+        Element.prototype.attachShadow = function (init) {
+            const root = nativeAttachShadow.call(this, init);
+            SHADOW_ROOTS.set(this, root);
+            handleRoot(root);
+            observeRoot(root);
+            return root;
+        };
+    }
+    function getRoot(host) {
+        return (host && (host.shadowRoot || SHADOW_ROOTS.get(host))) || null;
+    }
+
+    // ============ SETTINGS ============
+    // Edit values below once; every reference in the script uses them.
+    //
+    // Named size presets. To add one, add another line here.
+    const SIZES = {
+        small: '1.5rem',
+        medium: '2rem',
+        large: '3rem',
+        xlarge: '3.5rem',
+    };
+
+    // Netflix renders its subtitle cues at 17px (too small on large screens).
+    // Use one of the SIZES presets above for bigger text: SIZES.small / SIZES.medium / SIZES.large / SIZES.xlarge
+    const FONT_SIZE = SIZES.large;
+
+    // Custom font. Inter is loaded from Google Fonts (SIL Open Font License).
+    // To disable, comment out the line below.
+    const FONT_FAMILY = "'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif";
+
+    // Text color. #FFD200 is Disney yellow; any CSS color works.
+    const TEXT_COLOR = '#FFD200';
+
+    // Netflix uses font-weight: bolder (= 700 over a normal base).
+    // 0 = normal, 400 = regular, 700 = bold, 800 = extra bold
+    const FONT_WEIGHT = '700';
+
+    // Netflix uses line-height: normal.
+    // Lower = tighter, higher = more spacing.
+    const LINE_HEIGHT = 'normal';
+
+    // Netflix uses a black 7px blur shadow behind the text.
+    // Layered with a directional offset shadow for a visible outline on bright scenes.
+    // Remove the value to disable.
+    const TEXT_SHADOW = '#000 0px 0px 7px, 0.05em 0.08em 0.06em rgba(0, 0, 0, 0.95), 0.02em 0.04em 0 rgba(0, 0, 0, 0.8)';
+
+    // Netflix has no background box, only the text shadow.
+    // Background box behind each subtitle line. 0 = no box, 0.55 = 55% black.
+    const LINE_BACKGROUND = 'transparent';
+    // ============ END SETTINGS ============
+
+    const STYLE_ID = 'dplus-subtitle-force';
+    const CUE_SELECTOR = '.hive-subtitle-renderer-cue, .dss-subtitle-renderer-cue';
+    const CSS = `
+    .dss-subtitle-renderer-cue,
+    .hive-subtitle-renderer-cue {
+        color: ${TEXT_COLOR} !important;
+        font-size: ${FONT_SIZE} !important;
+        font-weight: ${FONT_WEIGHT} !important;
+        -webkit-text-fill-color: ${TEXT_COLOR} !important;
+        text-shadow: ${TEXT_SHADOW} !important;
+        line-height: ${LINE_HEIGHT} !important;
+        ${typeof FONT_FAMILY !== 'undefined' ? `font-family: ${FONT_FAMILY} !important;` : ''}
+    }
+    .dss-subtitle-renderer-cue > div,
+    .hive-subtitle-renderer-cue > div,
+    .dss-subtitle-renderer-cue > div > span,
+    .hive-subtitle-renderer-cue > div > span,
+    .dss-subtitle-renderer-line,
+    .hive-subtitle-renderer-line {
+        color: ${TEXT_COLOR} !important;
+        -webkit-text-fill-color: ${TEXT_COLOR} !important;
+        text-shadow: ${TEXT_SHADOW} !important;
+    }
+    .dss-subtitle-renderer-line,
+    .hive-subtitle-renderer-line {
+        background-color: ${LINE_BACKGROUND} !important;
+    }
+    .dss-subtitle-renderer-cue-window,
+    .hive-subtitle-renderer-cue-window {
+        background-color: transparent !important;
+    }
+    `;
+
+    const FONT_CSS = `
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap");
+    `;
+    const observers = [];
+
+    function makeFontStyle() {
+        const style = document.createElement('style');
+        style.id = STYLE_ID + '-font';
+        style.textContent = FONT_CSS;
+        return style;
+    }
+
+    function injectDocumentFont() {
+        const head = document.head || document.documentElement;
+        if (!head.querySelector('#' + STYLE_ID + '-font')) {
+            head.appendChild(makeFontStyle());
+        }
+    }
+
+    function makeStyle() {
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = CSS;
+        return style;
+    }
+
+    function styleCue(cue) {
+        cue.style.color = TEXT_COLOR;
+        cue.style.fontSize = FONT_SIZE;
+        cue.style.fontWeight = FONT_WEIGHT;
+        cue.style.webkitTextFillColor = TEXT_COLOR;
+        cue.style.textShadow = TEXT_SHADOW;
+        if (typeof FONT_FAMILY !== 'undefined') {
+            cue.style.fontFamily = FONT_FAMILY;
+        }
+        cue.querySelectorAll('div, span').forEach(el => {
+            el.style.color = TEXT_COLOR;
+            el.style.webkitTextFillColor = TEXT_COLOR;
+        });
+    }
+
+    function handleRoot(root) {
+        if (root.nodeType !== 1 && root.nodeType !== 11) return;
+        if (root.querySelector) {
+            if (!root.querySelector('#' + STYLE_ID)) {
+                root.appendChild(makeStyle());
+            }
+            if (root.querySelectorAll) {
+                root.querySelectorAll(CUE_SELECTOR).forEach(styleCue);
+            }
+        }
+    }
+
+    function observeRoot(root) {
+        if (!root) return;
+        handleRoot(root);
+        if (!root.__dplusObserved) {
+            root.__dplusObserved = true;
+            const observer = new MutationObserver(() => handleRoot(root));
+            observer.observe(root, { childList: true, subtree: true });
+            observers.push(observer);
+        }
+    }
+
+    function observeShadow(host) {
+        observeRoot(getRoot(host));
+    }
+
+    function walk(el) {
+        const root = getRoot(el);
+        if (root) {
+            observeRoot(root);
+            for (const child of root.children) walk(child);
+        }
+        for (const child of el.children) walk(child);
+    }
+
+    const lightObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType === 1) walk(node);
+            }
+        }
+    });
+
+    function init() {
+        const root = document.documentElement;
+        if (!root) return;
+        if (typeof FONT_FAMILY !== 'undefined') {
+            injectDocumentFont();
+        }
+        walk(root);
+        if (!document.__dplusLightObserved) {
+            document.__dplusLightObserved = true;
+            lightObserver.observe(root, { childList: true, subtree: true });
+            observers.push(lightObserver);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
